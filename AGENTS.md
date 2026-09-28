@@ -15,13 +15,18 @@ Use `bunx` instead of `npx` if the project uses bun (`bun.lock` present).
 ```bash
 npx expo install <package>  # ALWAYS use instead of npm/yarn/pnpm/bun add — resolves SDK-compatible versions
 npx expo start              # start the dev server
-npx expo lint               # lint
-npx tsc --noEmit            # typecheck
+npm run check               # lint + format (Biome, aplica correções)
+npm run typecheck           # typecheck
 npx expo-doctor             # diagnose dependency and config issues
 npx expo install --fix      # fix incompatible package versions
 ```
 
-Run lint and typecheck before declaring any task done.
+Run `npm run check` and `npm run typecheck` before declaring any task done. Linting/formatting uses **Biome** (`biome.json`), not ESLint — do not run `npx expo lint`, it would reinstall ESLint.
+
+## Commits & versioning
+
+- Commits follow Conventional Commits (`feat:`, `fix:`, `chore:` …), enforced by commitlint via husky. Biome runs on staged files in pre-commit.
+- Releases: `npm run release` bumps the version in `package.json` **and** `app.json` (`expo.version`) and updates `CHANGELOG.md` (config in `.versionrc.json`).
 
 ## Navigation & Routing
 
