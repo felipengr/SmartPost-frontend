@@ -39,7 +39,11 @@ export default function NovaDenuncia() {
     }
     try {
       setCapturando(true);
-      const foto = await cameraRef.current.takePictureAsync({ quality: 0.7 });
+      const foto = await cameraRef.current.takePictureAsync({
+        quality: 0.7,
+        // Sem som de disparo, para não constranger quem está fotografando na rua
+        shutterSound: false,
+      });
       setFotoRascunho(foto.uri);
       router.push('/denuncia/detalhes');
     } finally {
