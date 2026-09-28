@@ -49,33 +49,36 @@ export default function NovaDenuncia() {
     <View style={styles.screen}>
       <ScreenHeader title="Nova denúncia" />
 
-      <View style={styles.cameraArea}>
-        {temPermissao && (
-          <CameraView
-            ref={cameraRef}
-            style={StyleSheet.absoluteFill}
-            facing="back"
-            onCameraReady={() => setPronta(true)}
-          />
-        )}
-
-        <Text style={styles.hint}>Enquadre o poste e o fio danificado</Text>
-
-        <View style={[styles.frame, temPermissao && styles.frameTransparent]}>
-          {!temPermissao && (
-            <View style={styles.noPermission}>
-              <LogoIcon size={80} />
-              {permission && !permission.granted && (
-                <Pressable onPress={requestPermission} hitSlop={8}>
-                  <Text style={styles.permissionText}>
-                    {permission.canAskAgain
-                      ? 'Permitir acesso à câmera'
-                      : 'Câmera bloqueada nas configurações'}
-                  </Text>
-                </Pressable>
-              )}
-            </View>
+      {/* O botão fica fora da área da câmera: ela corta o que passa da borda (overflow) */}
+      <View style={styles.cameraWrapper}>
+        <View style={styles.cameraArea}>
+          {temPermissao && (
+            <CameraView
+              ref={cameraRef}
+              style={StyleSheet.absoluteFill}
+              facing="back"
+              onCameraReady={() => setPronta(true)}
+            />
           )}
+
+          <Text style={styles.hint}>Enquadre o poste e o fio danificado</Text>
+
+          <View style={[styles.frame, temPermissao && styles.frameTransparent]}>
+            {!temPermissao && (
+              <View style={styles.noPermission}>
+                <LogoIcon size={80} />
+                {permission && !permission.granted && (
+                  <Pressable onPress={requestPermission} hitSlop={8}>
+                    <Text style={styles.permissionText}>
+                      {permission.canAskAgain
+                        ? 'Permitir acesso à câmera'
+                        : 'Câmera bloqueada nas configurações'}
+                    </Text>
+                  </Pressable>
+                )}
+              </View>
+            )}
+          </View>
         </View>
 
         <Pressable
@@ -118,7 +121,13 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
+  cameraWrapper: {
+    alignItems: 'center',
+    zIndex: 1,
+    elevation: 1,
+  },
   cameraArea: {
+    alignSelf: 'stretch',
     height: 300,
     backgroundColor: colors.cameraBg,
     alignItems: 'center',
