@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { router, useLocalSearchParams } from 'expo-router';
+import { router } from 'expo-router';
 import { useMemo, useState } from 'react';
 import {
   Image,
@@ -28,8 +28,7 @@ const TIPOS = Object.keys(TIPO_LABEL) as TipoProblema[];
 // 06 — Detalhes da Denúncia
 export default function DetalhesDenuncia() {
   const insets = useSafeAreaInsets();
-  const { fotoUri } = useLocalSearchParams<{ fotoUri?: string }>();
-  const { criarDenuncia } = useApp();
+  const { criarDenuncia, fotoRascunho: fotoUri, setFotoRascunho } = useApp();
   const agora = useMemo(() => new Date(), []);
 
   const [selecionados, setSelecionados] = useState<TipoProblema[]>([]);
@@ -40,6 +39,7 @@ export default function DetalhesDenuncia() {
 
   const publicar = () => {
     const nova = criarDenuncia({ fotoUri, tipos: selecionados, observacao: observacao.trim() });
+    setFotoRascunho(undefined);
     // Tira câmera e detalhes da pilha, para o "voltar" não reabrir o formulário
     router.dismissAll();
     router.push({ pathname: '/denuncia/sucesso', params: { protocolo: nova.protocolo } });

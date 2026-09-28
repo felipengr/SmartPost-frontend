@@ -13,7 +13,7 @@ import { colors, radius, spacing } from '@/theme';
 // 05 — Nova Denúncia (câmera)
 export default function NovaDenuncia() {
   const insets = useSafeAreaInsets();
-  const { municipio } = useApp();
+  const { municipio, setFotoRascunho } = useApp();
   const [permission, requestPermission] = useCameraPermissions();
   const cameraRef = useRef<CameraView>(null);
   const [pronta, setPronta] = useState(false);
@@ -33,13 +33,15 @@ export default function NovaDenuncia() {
   const capturar = async () => {
     // Sem câmera (simulador/permissão negada): segue sem foto, usando a ilustração mock
     if (!temPermissao || !pronta || !cameraRef.current) {
+      setFotoRascunho(undefined);
       router.push('/denuncia/detalhes');
       return;
     }
     try {
       setCapturando(true);
       const foto = await cameraRef.current.takePictureAsync({ quality: 0.7 });
-      router.push({ pathname: '/denuncia/detalhes', params: { fotoUri: foto.uri } });
+      setFotoRascunho(foto.uri);
+      router.push('/denuncia/detalhes');
     } finally {
       setCapturando(false);
     }

@@ -13,6 +13,10 @@ type AppContextValue = {
   municipio: Municipio | null;
   usuario: Usuario | null;
   denuncias: Denuncia[];
+  // Foto da denúncia em andamento. Fica no estado (e não em params da rota) porque o
+  // caminho do arquivo tem caracteres codificados (%40, %2F) que o router decodificaria.
+  fotoRascunho: string | undefined;
+  setFotoRascunho: (uri: string | undefined) => void;
   selecionarMunicipio: (m: Municipio) => void;
   login: (cpf: string, senha: string) => Promise<boolean>;
   logout: () => void;
@@ -26,6 +30,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [municipio, setMunicipio] = useState<Municipio | null>(null);
   const [usuario, setUsuario] = useState<Usuario | null>(null);
   const [denuncias, setDenuncias] = useState<Denuncia[]>(DENUNCIAS_MOCK);
+  const [fotoRascunho, setFotoRascunho] = useState<string | undefined>();
 
   const login = useCallback(async (cpf: string, senha: string) => {
     await new Promise((r) => setTimeout(r, 600));
@@ -65,12 +70,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
       municipio,
       usuario,
       denuncias,
+      fotoRascunho,
+      setFotoRascunho,
       selecionarMunicipio: setMunicipio,
       login,
       logout,
       criarDenuncia,
     }),
-    [municipio, usuario, denuncias, login, logout, criarDenuncia],
+    [municipio, usuario, denuncias, fotoRascunho, login, logout, criarDenuncia],
   );
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
