@@ -190,7 +190,21 @@ Transições válidas: `recebida → em_analise → resolvida`. O servidor regis
 { "nome": "Maria Souza", "cpf": "987.654.321-00", "senhaInicial": "••••••••", "papel": "cidadao" }
 ```
 
-Cria o usuário no município do gestor. **201** usuário sem senha · **409** `CPF_JA_CADASTRADO`.
+- Cria o usuário no município do gestor (o município não vem no corpo).
+- `cpf` com ou sem máscara; precisa ter dígitos verificadores válidos (CPFs como `111.111.111-11` são recusados).
+- `nome` de 3 a 120 caracteres · `senhaInicial` de 8 a 128 · `papel` é `cidadao` ou `gestor`.
+
+**201**, sem senha e sem CPF:
+```json
+{
+  "id": "u_01J...",
+  "nome": "Maria Souza",
+  "papel": "cidadao",
+  "municipio": { "id": "piracaia", "nome": "Piracaia", "uf": "SP", "estado": "São Paulo" }
+}
+```
+
+**403** `SEM_PERMISSAO` se quem chama não for `gestor` · **409** `CPF_JA_CADASTRADO` se o CPF já existir no município · **422** `DADOS_INVALIDOS`.
 
 ## Enums
 
