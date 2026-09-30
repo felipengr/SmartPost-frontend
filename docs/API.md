@@ -81,7 +81,7 @@ Lista os municípios conveniados. Público (é chamado antes do login).
 
 **401** `CREDENCIAIS_INVALIDAS` — mesma resposta para CPF inexistente e senha errada (não revelar qual dos dois falhou).
 
-> O token expira em 30 dias. O app guarda o token com `expo-secure-store`; ao receber 401 em qualquer rota, volta para o login.
+> O token expira em 30 dias. O app guarda o token com `expo-secure-store`; ao receber 401 em qualquer rota (fora o próprio login), volta para o login.
 
 ### `GET /me`
 
@@ -94,11 +94,11 @@ Dados do usuário logado e as estatísticas do perfil.
   "nome": "Felipe Nogueira",
   "papel": "cidadao",
   "municipio": { "id": "piracaia", "nome": "Piracaia", "uf": "SP", "estado": "São Paulo" },
-  "estatisticas": { "denuncias": 12, "resolvidas": 8, "emAnalise": 4 }
+  "estatisticas": { "denuncias": 12 }
 }
 ```
 
-`estatisticas` conta só as denúncias do próprio usuário. O CPF **não** é devolvido.
+`estatisticas.denuncias` é o total de denúncias feitas pelo próprio usuário, em qualquer status. O CPF **não** é devolvido.
 
 ### `PATCH /me/senha`
 
@@ -106,7 +106,9 @@ Dados do usuário logado e as estatísticas do perfil.
 { "senhaAtual": "••••", "novaSenha": "••••••••" }
 ```
 
-**204** sem corpo · **401** `SENHA_INCORRETA` · **422** se `novaSenha` tiver menos de 8 caracteres.
+**204** sem corpo · **403** `SENHA_INCORRETA` · **422** se `novaSenha` tiver menos de 8 caracteres.
+
+> É 403, e não 401, de propósito: 401 faz o app voltar para o login, e errar a senha atual não deve deslogar ninguém.
 
 ### `GET /denuncias`
 
@@ -214,6 +216,7 @@ Todo erro segue o mesmo formato:
 | 401 | `NAO_AUTENTICADO` | Sem token, token inválido ou expirado |
 | 401 | `CREDENCIAIS_INVALIDAS` | Login falhou |
 | 403 | `SEM_PERMISSAO` | Papel ou município não permitem a ação |
+| 403 | `SENHA_INCORRETA` | Senha atual errada ao trocar a senha |
 | 404 | `NAO_ENCONTRADA` | Recurso não existe (ou é de outro município) |
 | 409 | `CPF_JA_CADASTRADO` | CPF repetido no cadastro |
 | 422 | `DADOS_INVALIDOS` | Validação falhou; `campos` diz o quê |
