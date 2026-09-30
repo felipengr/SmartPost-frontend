@@ -161,8 +161,8 @@ Mesmo formato e paginação de `GET /denuncias`, filtrado pelo autor = usuário 
 
 | Campo | Tipo | Obrigatório | Regra |
 |---|---|---|---|
-| `foto` | arquivo JPEG | sim | Até 5 MB |
-| `tipos` | texto (repetido) | sim | Um ou mais de `TipoProblema`. Ex.: `tipos=fio_exposto&tipos=sem_energia` |
+| `foto` | arquivo JPEG | sim | Até 5 MB. O servidor confere o conteúdo (não só a extensão), limita a 1600 px e remove os metadados EXIF (GPS, aparelho) |
+| `tipos` | texto (repetido) | sim | Um ou mais de `TipoProblema`. Ex.: `tipos=fio_exposto&tipos=sem_energia`. Repetições são ignoradas |
 | `descricao` | texto | não | Até 300 caracteres |
 | `latitude`, `longitude` | número | sim | Da localização do aparelho |
 | `endereco` | texto | sim | Obtido no app via `expo-location` (reverse geocode) |
@@ -170,7 +170,9 @@ Mesmo formato e paginação de `GET /denuncias`, filtrado pelo autor = usuário 
 - O servidor gera `id`, `protocolo`, `criadaEm` e `status = "recebida"`.
 - O município é o do usuário logado (não vem do app).
 
-**201** o item criado, no mesmo formato do feed · **422** `DADOS_INVALIDOS`.
+**201** o item criado, no mesmo formato do feed · **422** `DADOS_INVALIDOS` · **400** `REQUISICAO_INVALIDA` se o corpo não for `multipart/form-data`.
+
+Exemplos de `campos` no 422: `{ "foto": "obrigatório" }`, `{ "foto": "a foto deve ser JPEG" }`, `{ "foto": "máximo de 5 MB" }`, `{ "tipos": "selecione ao menos um tipo" }`, `{ "latitude": "obrigatório" }`.
 
 > O app hoje só manda a foto e os tipos; localização e endereço entram na integração (`expo-location`).
 
@@ -226,7 +228,7 @@ Todo erro segue o mesmo formato:
 
 | HTTP | `codigo` | Quando |
 |---|---|---|
-| 400 | `REQUISICAO_INVALIDA` | JSON malformado, query inválida |
+| 400 | `REQUISICAO_INVALIDA` | JSON malformado, query inválida, formulário que não é multipart |
 | 401 | `NAO_AUTENTICADO` | Sem token, token inválido ou expirado |
 | 401 | `CREDENCIAIS_INVALIDAS` | Login falhou |
 | 403 | `SEM_PERMISSAO` | Papel ou município não permitem a ação |
@@ -241,7 +243,7 @@ Todo erro segue o mesmo formato:
 ## Modelo de dados (referência para o backend)
 
 ```
-municipios   id (slug) · nome · uf · estado · prefixo_protocolo ("SP")
+municipios   id (slug) · nome · uf · estado · prefixo_protocolo ("SP") · ultimo_protocolo
 usuarios     id · municipio_id → municipios · cpf (só dígitos) · nome · senha_hash · papel · criado_em
              único: (municipio_id, cpf)
 denuncias    id · municipio_id → municipios · autor_id → usuarios · protocolo · tipos (text[]) · status
@@ -250,8 +252,8 @@ denuncias    id · municipio_id → municipios · autor_id → usuarios · proto
 historico_status   id · denuncia_id → denuncias · de · para · gestor_id → usuarios · em
 ```
 
-- **Protocolo:** `<prefixo_protocolo>-<sequencial de 4 dígitos por município>` — ex.: `SP-0248`.
-- **Distância:** calculada no SQL pela fórmula de Haversine a partir de `latitude`/`longitude`. PostGIS não é necessário neste volume.
+- **Protocolo:** `<prefixo_protocolo>-<sequencial de 4 dígitos por município>` — ex.: `SP-0248`. O sequencial vem de `ultimo_protocolo`, incrementado na mesma transação que cria a denúncia; denúncias simultâneas nunca repetem número.
+- **Distância:** fórmula de Haversine a partir de `latitude`/`longitude`, calculada na API para os itens da página. PostGIS não é necessário neste volume.
 
 ## Fora do escopo da v1
 
