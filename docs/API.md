@@ -81,7 +81,9 @@ Lista os municípios conveniados. Público (é chamado antes do login).
 
 **401** `CREDENCIAIS_INVALIDAS` — mesma resposta para CPF inexistente e senha errada (não revelar qual dos dois falhou).
 
-> O token expira em 30 dias. O app guarda o token com `expo-secure-store`; ao receber 401 em qualquer rota (fora o próprio login), volta para o login.
+**429** `MUITAS_TENTATIVAS` — mais de 5 tentativas por minuto no mesmo CPF (de qualquer aparelho) ou mais de 20 por minuto do mesmo IP. O header `Retry-After` diz quantos segundos esperar, e a `mensagem` já traz esse número para mostrar ao usuário.
+
+> O token expira em 30 dias, ou antes, se o usuário trocar a senha. O app guarda o token com `expo-secure-store`; ao receber 401 em qualquer rota (fora o próprio login), volta para o login.
 
 ### `GET /me`
 
@@ -106,7 +108,13 @@ Dados do usuário logado e as estatísticas do perfil.
 { "senhaAtual": "••••", "novaSenha": "••••••••" }
 ```
 
-**204** sem corpo · **403** `SENHA_INCORRETA` · **422** se `novaSenha` tiver menos de 8 caracteres.
+**200** com um token novo · **403** `SENHA_INCORRETA` · **422** se `novaSenha` tiver menos de 8 caracteres.
+
+```json
+{ "token": "eyJhbGciOi..." }
+```
+
+Trocar a senha **derruba todas as sessões** do usuário, em qualquer aparelho (inclusive um token roubado). O aparelho que fez a troca segue logado: o app só precisa substituir o token guardado pelo novo.
 
 > É 403, e não 401, de propósito: 401 faz o app voltar para o login, e errar a senha atual não deve deslogar ninguém.
 
@@ -235,13 +243,14 @@ Todo erro segue o mesmo formato:
 | HTTP | `codigo` | Quando |
 |---|---|---|
 | 400 | `REQUISICAO_INVALIDA` | JSON malformado, query inválida, formulário que não é multipart |
-| 401 | `NAO_AUTENTICADO` | Sem token, token inválido ou expirado |
+| 401 | `NAO_AUTENTICADO` | Sem token, token inválido, expirado ou anterior à última troca de senha |
 | 401 | `CREDENCIAIS_INVALIDAS` | Login falhou |
 | 403 | `SEM_PERMISSAO` | Papel ou município não permitem a ação |
 | 403 | `SENHA_INCORRETA` | Senha atual errada ao trocar a senha |
 | 404 | `NAO_ENCONTRADA` | Recurso não existe (ou é de outro município) |
 | 409 | `CPF_JA_CADASTRADO` | CPF repetido no cadastro |
 | 422 | `DADOS_INVALIDOS` | Validação falhou; `campos` diz o quê |
+| 429 | `MUITAS_TENTATIVAS` | Tentativas de login demais; header `Retry-After` em segundos |
 | 500 | `ERRO_INTERNO` | Qualquer outro problema — sem detalhes técnicos na resposta |
 
 `mensagem` é em português e pode ser mostrada direto ao usuário. `campos` só aparece em 422.
