@@ -182,9 +182,15 @@ Exemplos de `campos` no 422: `{ "foto": "obrigatório" }`, `{ "foto": "a foto de
 { "status": "em_analise" }
 ```
 
-**200** o item atualizado · **403** `SEM_PERMISSAO` se não for `gestor` do mesmo município.
+**200** o item atualizado · **403** `SEM_PERMISSAO` se quem chama não for `gestor` · **404** `NAO_ENCONTRADA` se a denúncia não existir ou for de outro município (como no `GET /denuncias/:id`, não revela que ela existe) · **422** `DADOS_INVALIDOS` em transição inválida.
 
-Transições válidas: `recebida → em_analise → resolvida`. O servidor registra cada mudança (quem e quando) em um histórico.
+Transições válidas: `recebida → em_analise → resolvida`, sem pular, voltar ou repetir. Fora disso, **422** com a próxima etapa permitida:
+
+```json
+{ "erro": { "codigo": "DADOS_INVALIDOS", "mensagem": "Alguns dados estão inválidos.", "campos": { "status": "de recebida só pode ir para em_analise" } } }
+```
+
+O servidor registra cada mudança (de, para, quem e quando) em um histórico. Se dois gestores mudarem a mesma denúncia ao mesmo tempo, só a primeira mudança vale; a outra recebe 422.
 
 ### `POST /usuarios` — gestor
 
