@@ -35,3 +35,16 @@ export function distancia(km: number): string {
   if (km === 0) return 'Você está aqui';
   return `${km.toLocaleString('pt-BR', { maximumFractionDigits: 1 })} km de você`;
 }
+
+// Mesma regra da API: 11 dígitos, não todos iguais e dígitos verificadores corretos
+export function cpfValido(valor: string): boolean {
+  const cpf = valor.replace(/\D/g, '');
+  if (cpf.length !== 11 || /^(\d)\1{10}$/.test(cpf)) return false;
+  const numeros = [...cpf].map(Number);
+  for (const posicao of [9, 10]) {
+    let soma = 0;
+    for (let i = 0; i < posicao; i++) soma += (numeros[i] ?? 0) * (posicao + 1 - i);
+    if (((soma * 10) % 11) % 10 !== numeros[posicao]) return false;
+  }
+  return true;
+}
