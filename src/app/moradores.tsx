@@ -2,9 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   FlatList,
-  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -21,23 +19,12 @@ import { CartaoAcesso } from '@/components/CartaoAcesso';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { useApp } from '@/context/AppContext';
 import { colors, radius, spacing } from '@/theme';
+import { confirmar } from '@/utils/confirmar';
 import { iniciais } from '@/utils/format';
 import { gerarSenhaInicial } from '@/utils/senha';
 
 function mensagem(e: unknown, padrao: string) {
   return e instanceof ErroApi ? e.message : padrao;
-}
-
-// Pergunta antes de agir (no navegador, o Alert com botões não funciona)
-function confirmar(titulo: string, texto: string, acao: () => void) {
-  if (Platform.OS === 'web') {
-    if (window.confirm(`${titulo}\n\n${texto}`)) acao();
-    return;
-  }
-  Alert.alert(titulo, texto, [
-    { text: 'Cancelar', style: 'cancel' },
-    { text: 'Redefinir', style: 'destructive', onPress: acao },
-  ]);
 }
 
 // Perfil → Painel da prefeitura → Moradores: usuários da cidade e "esqueci a senha"
@@ -88,6 +75,7 @@ export default function Moradores() {
     confirmar(
       'Redefinir senha',
       `${pessoa.nome} vai receber uma senha nova e sair de todos os aparelhos em que estiver conectado.`,
+      'Redefinir',
       async () => {
         setRedefinindo(pessoa.id);
         setErro(null);
@@ -101,6 +89,7 @@ export default function Moradores() {
           setRedefinindo(null);
         }
       },
+      true,
     );
 
   if (redefinido) {

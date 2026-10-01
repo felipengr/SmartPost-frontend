@@ -1,10 +1,10 @@
 import { Ionicons } from '@expo/vector-icons';
-import { Image, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Image, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { Chip } from '@/components/Chip';
 import { LogoIcon } from '@/components/Logo';
 import { PoleIllustration } from '@/components/PoleIllustration';
-import { STATUS_LABEL, TIPO_CHIP } from '@/rotulos';
+import { ACAO_STATUS, PROXIMO_STATUS, STATUS_LABEL, TIPO_CHIP } from '@/rotulos';
 import { colors, radius, spacing } from '@/theme';
 import type { Denuncia, Municipio, StatusDenuncia, TipoProblema } from '@/types';
 import { distancia, tempoRelativo } from '@/utils/format';
@@ -26,9 +26,13 @@ const STATUS_TONE: Record<StatusDenuncia, 'success' | 'warning'> = {
 type Props = {
   denuncia: Denuncia;
   municipio: Municipio | null;
+  // Só para gestor: leva ao próximo status (a lista decide quem pode)
+  onAvancarStatus?: () => void;
+  avancando?: boolean;
 };
 
-export function DenunciaCard({ denuncia, municipio }: Props) {
+export function DenunciaCard({ denuncia, municipio, onAvancarStatus, avancando }: Props) {
+  const proximo = PROXIMO_STATUS[denuncia.status];
   return (
     <View style={styles.card}>
       <View style={styles.header}>
@@ -73,6 +77,31 @@ export function DenunciaCard({ denuncia, municipio }: Props) {
           <Text style={styles.meta}>Protocolo #{denuncia.protocolo}</Text>
         </View>
       </View>
+
+      {onAvancarStatus && proximo && (
+        <Pressable
+          accessibilityRole="button"
+          onPress={onAvancarStatus}
+          disabled={avancando}
+          style={({ pressed }) => [styles.acao, pressed && { opacity: 0.7 }]}>
+          {avancando ? (
+            <ActivityIndicator size="small" color={colors.primary} />
+          ) : (
+            <>
+              <Ionicons
+                name={
+                  proximo === 'resolvida'
+                    ? 'checkmark-circle-outline'
+                    : 'arrow-forward-circle-outline'
+                }
+                size={18}
+                color={colors.primary}
+              />
+              <Text style={styles.acaoTexto}>{ACAO_STATUS[denuncia.status]}</Text>
+            </>
+          )}
+        </Pressable>
+      )}
     </View>
   );
 }
@@ -148,5 +177,20 @@ const styles = StyleSheet.create({
   meta: {
     fontSize: 12,
     color: colors.textMuted,
+  },
+  acao: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.xs + 2,
+    minHeight: 44,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+    backgroundColor: colors.primaryLight,
+  },
+  acaoTexto: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.primary,
   },
 });

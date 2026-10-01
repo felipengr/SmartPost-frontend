@@ -1,7 +1,15 @@
 // Chamadas da API, uma por rota do contrato (docs/API.md)
 import { File } from 'expo-file-system';
 
-import type { Denuncia, Municipio, PaginaDenuncias, Papel, TipoProblema, Usuario } from '@/types';
+import type {
+  Denuncia,
+  Municipio,
+  PaginaDenuncias,
+  Papel,
+  StatusDenuncia,
+  TipoProblema,
+  Usuario,
+} from '@/types';
 
 import { api } from './cliente';
 
@@ -113,4 +121,11 @@ export function listarUsuarios(busca: string) {
 // Só gestor: senha nova para quem esqueceu (a pessoa sai de todos os aparelhos)
 export function redefinirSenha(id: string, novaSenha: string) {
   return api<void>(`/usuarios/${id}/senha`, { method: 'PATCH', corpo: { novaSenha } });
+}
+
+// Só gestor: avança o status (recebida → em_analise → resolvida). Devolve o item atualizado
+export async function mudarStatus(id: string, status: StatusDenuncia) {
+  return converter(
+    await api<DenunciaDaApi>(`/denuncias/${id}/status`, { method: 'PATCH', corpo: { status } }),
+  );
 }

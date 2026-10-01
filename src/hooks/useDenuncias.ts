@@ -69,5 +69,19 @@ export function useDenuncias(lista: 'feed' | 'minhas') {
     }, [recarregar]),
   );
 
-  return { itens, carregando, atualizando, carregandoMais, erro, recarregar, carregarMais };
+  // Troca um item já na tela pela versão nova (ex.: status mudado pelo gestor), sem recarregar
+  const substituir = useCallback((nova: Denuncia) => {
+    setItens((atuais) => atuais.map((d) => (d.id === nova.id ? nova : d)));
+  }, []);
+
+  return {
+    itens,
+    carregando,
+    atualizando,
+    carregandoMais,
+    erro,
+    recarregar,
+    carregarMais,
+    substituir,
+  };
 }
