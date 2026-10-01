@@ -1,7 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
+  ActivityIndicator,
   Image,
   KeyboardAvoidingView,
   Platform,
@@ -14,6 +15,8 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { ErroApi } from '@/api/cliente';
+import { publicarDenuncia } from '@/api/endpoints';
 import { Button } from '@/components/Button';
 import { PoleIllustration } from '@/components/PoleIllustration';
 import { ScreenHeader } from '@/components/ScreenHeader';
@@ -22,27 +25,72 @@ import { TIPO_LABEL } from '@/rotulos';
 import { colors, radius, spacing } from '@/theme';
 import type { TipoProblema } from '@/types';
 import { dataHora } from '@/utils/format';
+import { prepararFoto } from '@/utils/foto';
+import { ErroLocalizacao, type LocalDaDenuncia, obterLocalDaDenuncia } from '@/utils/localizacao';
 
 const TIPOS = Object.keys(TIPO_LABEL) as TipoProblema[];
+
+// Mensagem do erro de envio: no 422, junta o que a API apontou em cada campo
+function mensagemDeEnvio(e: unknown) {
+  if (!(e instanceof ErroApi)) return 'Não foi possível publicar. Tente novamente.';
+  const campos = e.campos ? Object.values(e.campos).join('; ') : '';
+  return campos ? `${e.message} (${campos})` : e.message;
+}
 
 // 06 — Detalhes da Denúncia
 export default function DetalhesDenuncia() {
   const insets = useSafeAreaInsets();
-  const { criarDenuncia, fotoRascunho: fotoUri, setFotoRascunho } = useApp();
+  const { fotoRascunho: fotoUri, setFotoRascunho } = useApp();
   const agora = useMemo(() => new Date(), []);
 
   const [selecionados, setSelecionados] = useState<TipoProblema[]>([]);
   const [observacao, setObservacao] = useState('');
+  const [local, setLocal] = useState<LocalDaDenuncia | null>(null);
+  const [erroLocal, setErroLocal] = useState<string | null>(null);
+  const [publicando, setPublicando] = useState(false);
+  const [erroEnvio, setErroEnvio] = useState<string | null>(null);
+
+  // Onde está o problema: GPS de agora + endereço por extenso
+  const buscarLocal = useCallback(() => {
+    setErroLocal(null);
+    setLocal(null);
+    obterLocalDaDenuncia()
+      .then(setLocal)
+      .catch((e) =>
+        setErroLocal(
+          e instanceof ErroLocalizacao ? e.message : 'Não foi possível obter sua localização.',
+        ),
+      );
+  }, []);
+
+  useEffect(buscarLocal, [buscarLocal]);
 
   const alternar = (t: TipoProblema) =>
     setSelecionados((prev) => (prev.includes(t) ? prev.filter((x) => x !== t) : [...prev, t]));
 
-  const publicar = () => {
-    const nova = criarDenuncia({ fotoUri, tipos: selecionados, observacao: observacao.trim() });
-    setFotoRascunho(undefined);
-    // Tira câmera e detalhes da pilha, para o "voltar" não reabrir o formulário
-    router.dismissAll();
-    router.push({ pathname: '/denuncia/sucesso', params: { protocolo: nova.protocolo } });
+  const podePublicar = !!fotoUri && !!local && selecionados.length > 0;
+
+  const publicar = async () => {
+    if (!fotoUri || !local || publicando) return;
+    setErroEnvio(null);
+    setPublicando(true);
+    try {
+      const nova = await publicarDenuncia({
+        fotoUri: await prepararFoto(fotoUri),
+        tipos: selecionados,
+        descricao: observacao.trim(),
+        posicao: local.posicao,
+        endereco: local.endereco,
+      });
+      setFotoRascunho(undefined);
+      // Tira câmera e detalhes da pilha, para o "voltar" não reabrir o formulário
+      router.dismissAll();
+      router.push({ pathname: '/denuncia/sucesso', params: { protocolo: nova.protocolo } });
+    } catch (e) {
+      // Foto, tipos e texto continuam na tela: dá para tentar de novo sem refazer nada
+      setErroEnvio(mensagemDeEnvio(e));
+      setPublicando(false);
+    }
   };
 
   return (
@@ -61,10 +109,22 @@ export default function DetalhesDenuncia() {
           )}
         </View>
 
+        {!fotoUri && <Text style={styles.erro}>Volte e tire uma foto do problema.</Text>}
+
         <View style={[styles.row, { marginTop: spacing.md }]}>
           <Ionicons name="location-outline" size={12} color={colors.textMuted} />
-          <Text style={styles.address}>Rua Dr. Cândido Rodrigues</Text>
+          {local ? (
+            <Text style={styles.address}>{local.endereco}</Text>
+          ) : erroLocal ? (
+            <Text style={[styles.address, styles.erroTexto]}>{erroLocal}</Text>
+          ) : (
+            <>
+              <ActivityIndicator size="small" color={colors.primary} />
+              <Text style={styles.address}>Obtendo sua localização…</Text>
+            </>
+          )}
         </View>
+        {erroLocal && <Button title="Tentar de novo" variant="link" onPress={buscarLocal} />}
         <Text style={styles.time}>{dataHora(agora)}</Text>
 
         <Text style={styles.section}>O que está acontecendo?</Text>
@@ -97,10 +157,13 @@ export default function DetalhesDenuncia() {
           maxLength={300}
         />
 
+        {erroEnvio && <Text style={styles.erro}>{erroEnvio}</Text>}
+
         <Button
           title="Publicar denúncia"
           onPress={publicar}
-          disabled={selecionados.length === 0}
+          loading={publicando}
+          disabled={!podePublicar}
           style={{ marginTop: spacing.lg }}
         />
       </ScrollView>
@@ -128,8 +191,18 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   address: {
+    flexShrink: 1,
     fontSize: 13,
     color: colors.text,
+  },
+  erroTexto: {
+    color: colors.danger,
+  },
+  erro: {
+    fontSize: 13,
+    lineHeight: 18,
+    color: colors.danger,
+    marginTop: spacing.md,
   },
   time: {
     fontSize: 11,

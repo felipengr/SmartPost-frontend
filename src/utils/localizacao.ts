@@ -12,12 +12,15 @@ function paraPosicao(local: Location.LocationObject | null): Posicao | null {
   return local ? { latitude: local.coords.latitude, longitude: local.coords.longitude } : null;
 }
 
-// GPS ligado com precisão média; desiste depois de alguns segundos
-async function posicaoAtual() {
+// Liga o GPS e desiste depois de alguns segundos
+async function posicaoAtual(
+  precisao = Location.Accuracy.Balanced,
+  tempoLimiteMs = TEMPO_LIMITE_MS,
+) {
   try {
     return await Promise.race([
-      Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced }),
-      new Promise<null>((resolver) => setTimeout(() => resolver(null), TEMPO_LIMITE_MS)),
+      Location.getCurrentPositionAsync({ accuracy: precisao }),
+      new Promise<null>((resolver) => setTimeout(() => resolver(null), tempoLimiteMs)),
     ]);
   } catch {
     return null;
@@ -47,4 +50,48 @@ export async function obterPosicao(): Promise<Posicao | null> {
     if (__DEV__) console.warn('[localização]', e);
     return null;
   }
+}
+
+export type LocalDaDenuncia = { posicao: Posicao; endereco: string };
+
+// Erro com mensagem pronta para a tela da nova denúncia
+export class ErroLocalizacao extends Error {}
+
+// "Rua Dr. Cândido Rodrigues, 120 - Centro"; sem nada útil, as coordenadas
+function formatarEndereco(item: Location.LocationGeocodedAddress | undefined, p: Posicao) {
+  const rua = [item?.street, item?.streetNumber].filter(Boolean).join(', ');
+  const texto = [rua || item?.name, item?.district].filter(Boolean).join(' - ');
+  return (texto || `${p.latitude.toFixed(5)}, ${p.longitude.toFixed(5)}`).slice(0, 300);
+}
+
+// Onde está o problema: precisa ser a posição de agora (é ela que vai para a prefeitura),
+// então aqui não vale a última posição antiga como no feed
+export async function obterLocalDaDenuncia(): Promise<LocalDaDenuncia> {
+  const { granted } = await Location.requestForegroundPermissionsAsync();
+  if (!granted) {
+    throw new ErroLocalizacao(
+      'Permita o acesso à localização nas configurações do aparelho para registrar onde está o problema.',
+    );
+  }
+
+  const local =
+    (await posicaoAtual(Location.Accuracy.High, 15_000)) ??
+    (await Location.getLastKnownPositionAsync({ maxAge: 2 * 60_000 }));
+  const posicao = paraPosicao(local);
+  if (!posicao) {
+    throw new ErroLocalizacao(
+      'Não foi possível obter sua localização. Verifique se o GPS está ligado e tente de novo.',
+    );
+  }
+  ultima = { posicao, em: Date.now() };
+
+  // Endereço por extenso a partir das coordenadas; se falhar, segue com as coordenadas
+  let endereco: string;
+  try {
+    const [item] = await Location.reverseGeocodeAsync(posicao);
+    endereco = formatarEndereco(item, posicao);
+  } catch {
+    endereco = formatarEndereco(undefined, posicao);
+  }
+  return { posicao, endereco };
 }

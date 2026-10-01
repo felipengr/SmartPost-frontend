@@ -33,9 +33,14 @@ type Opcoes = {
   method?: 'GET' | 'POST' | 'PATCH';
   // Objeto vira JSON; FormData vai como multipart (o fetch monta o boundary)
   corpo?: unknown;
+  // Envio de foto pelo 4G pode passar dos 15 s padrão
+  tempoLimiteMs?: number;
 };
 
-export async function api<T>(caminho: string, { method = 'GET', corpo }: Opcoes = {}): Promise<T> {
+export async function api<T>(
+  caminho: string,
+  { method = 'GET', corpo, tempoLimiteMs = TEMPO_LIMITE_MS }: Opcoes = {},
+): Promise<T> {
   const headers: Record<string, string> = { accept: 'application/json' };
   if (token) headers.authorization = `Bearer ${token}`;
 
@@ -48,7 +53,7 @@ export async function api<T>(caminho: string, { method = 'GET', corpo }: Opcoes 
   }
 
   const controle = new AbortController();
-  const relogio = setTimeout(() => controle.abort(), TEMPO_LIMITE_MS);
+  const relogio = setTimeout(() => controle.abort(), tempoLimiteMs);
 
   let resposta: Response;
   try {
@@ -58,7 +63,9 @@ export async function api<T>(caminho: string, { method = 'GET', corpo }: Opcoes 
       body,
       signal: controle.signal,
     });
-  } catch {
+  } catch (e) {
+    // Para a tela é "sem conexão"; no terminal do Expo, o motivo real (ajuda a depurar)
+    if (__DEV__) console.warn(`[api] ${method} ${caminho} não saiu do aparelho:`, e);
     throw new ErroApi(
       0,
       'SEM_CONEXAO',
