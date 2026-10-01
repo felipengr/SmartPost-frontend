@@ -5,9 +5,14 @@ export type Municipio = {
   estado: string;
 };
 
+export type Papel = 'cidadao' | 'gestor';
+
+// Como a API devolve (sem CPF: o servidor nunca manda)
 export type Usuario = {
+  id: string;
   nome: string;
-  cpf: string;
+  papel: Papel;
+  municipio: Municipio;
 };
 
 export type TipoProblema =

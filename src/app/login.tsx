@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { ErroApi } from '@/api/cliente';
 import { Button } from '@/components/Button';
 import { LogoIcon } from '@/components/Logo';
 import { useApp } from '@/context/AppContext';
@@ -27,13 +28,20 @@ export default function Login() {
   const [erro, setErro] = useState<string | null>(null);
 
   const entrar = async () => {
+    if (carregando) return;
+    if (cpf.replace(/\D/g, '').length !== 11 || !senha) {
+      setErro('Informe o CPF completo e a senha.');
+      return;
+    }
     setErro(null);
     setCarregando(true);
-    const ok = await login(cpf, senha);
-    // Em caso de sucesso, o Stack.Protected do _layout redireciona para o feed
-    if (!ok) {
+    try {
+      // Em caso de sucesso, o Stack.Protected do _layout redireciona para o feed
+      await login(cpf, senha);
+    } catch (e) {
+      // A API já manda a mensagem pronta: senha errada, muitas tentativas, sem conexão…
+      setErro(e instanceof ErroApi ? e.message : 'Não foi possível entrar. Tente novamente.');
       setCarregando(false);
-      setErro('CPF ou senha inválidos.');
     }
   };
 

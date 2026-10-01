@@ -1,11 +1,22 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useCallback, useEffect, useState } from 'react';
+import {
+  ActivityIndicator,
+  Alert,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { ErroApi } from '@/api/cliente';
+import { listarMunicipios } from '@/api/endpoints';
+import { Button } from '@/components/Button';
 import { LogoIcon } from '@/components/Logo';
 import { useApp } from '@/context/AppContext';
-import { MUNICIPIOS } from '@/mocks/data';
 import { colors, radius, spacing } from '@/theme';
 import type { Municipio } from '@/types';
 
@@ -13,6 +24,18 @@ import type { Municipio } from '@/types';
 export default function SelecionarMunicipio() {
   const insets = useSafeAreaInsets();
   const { selecionarMunicipio } = useApp();
+  const [municipios, setMunicipios] = useState<Municipio[] | null>(null);
+  const [erro, setErro] = useState<string | null>(null);
+
+  const carregar = useCallback(() => {
+    setErro(null);
+    setMunicipios(null);
+    listarMunicipios()
+      .then(setMunicipios)
+      .catch((e) => setErro(e instanceof ErroApi ? e.message : 'Não foi possível carregar.'));
+  }, []);
+
+  useEffect(carregar, [carregar]);
 
   const escolher = (m: Municipio) => {
     selecionarMunicipio(m);
@@ -22,7 +45,7 @@ export default function SelecionarMunicipio() {
   const outro = () =>
     Alert.alert(
       'Outro município',
-      'No momento o Smart Poste está disponível apenas em Piracaia. Em breve novos municípios conveniados.',
+      'O Smart Poste está disponível só nos municípios da lista. Em breve, novos municípios conveniados.',
     );
 
   return (
@@ -37,7 +60,15 @@ export default function SelecionarMunicipio() {
 
       <Text style={styles.section}>Municípios disponíveis</Text>
 
-      {MUNICIPIOS.map((m) => (
+      {!municipios && !erro && <ActivityIndicator color={colors.primary} style={styles.status} />}
+      {erro && (
+        <View style={styles.status}>
+          <Text style={styles.erro}>{erro}</Text>
+          <Button title="Tentar de novo" variant="link" onPress={carregar} />
+        </View>
+      )}
+
+      {municipios?.map((m) => (
         <Item
           key={m.id}
           badge={<Text style={styles.badgeText}>{m.nome[0]}</Text>}
@@ -144,5 +175,15 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: colors.textMuted,
     marginTop: 2,
+  },
+  status: {
+    marginVertical: spacing.lg,
+    alignItems: 'center',
+  },
+  erro: {
+    fontSize: 14,
+    lineHeight: 20,
+    color: colors.textMuted,
+    textAlign: 'center',
   },
 });
