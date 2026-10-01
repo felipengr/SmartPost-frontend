@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { CameraView, useCameraPermissions } from 'expo-camera';
+import { useForegroundPermissions } from 'expo-location';
 import { router } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
@@ -18,8 +19,18 @@ export default function NovaDenuncia() {
   const cameraRef = useRef<CameraView>(null);
   const [pronta, setPronta] = useState(false);
   const [capturando, setCapturando] = useState(false);
+  // Estado real da permissão de localização, para avisar antes da foto se ela vai faltar
+  const [localizacao, pedirLocalizacao] = useForegroundPermissions();
 
   const temPermissao = permission?.granted ?? false;
+
+  const estadoLocalizacao = !localizacao
+    ? null
+    : localizacao.granted
+      ? { sub: 'Registrada junto com a foto', status: 'Ativa', cor: colors.primary }
+      : localizacao.canAskAgain
+        ? { sub: 'Toque para permitir', status: 'Permitir', cor: colors.primary }
+        : { sub: 'Libere nas configurações do aparelho', status: 'Bloqueada', cor: colors.danger };
 
   // Pede a permissão uma única vez ao abrir; depois, só pelo link na tela
   const jaPediu = useRef(false);
@@ -106,7 +117,11 @@ export default function NovaDenuncia() {
         </Text>
         <Text style={styles.infoText}>Depois da foto, você poderá indicar o tipo de problema.</Text>
 
-        <View style={styles.location}>
+        <Pressable
+          accessibilityRole="button"
+          disabled={!localizacao || localizacao.granted || !localizacao.canAskAgain}
+          onPress={pedirLocalizacao}
+          style={styles.location}>
           <View style={{ flex: 1 }}>
             <View style={styles.row}>
               <Ionicons name="location-outline" size={13} color={colors.primary} />
@@ -114,10 +129,14 @@ export default function NovaDenuncia() {
                 {municipio ? `${municipio.nome} • ${municipio.uf}` : 'Localização'}
               </Text>
             </View>
-            <Text style={styles.locationSub}>Ativar localização precisa</Text>
+            {estadoLocalizacao && <Text style={styles.locationSub}>{estadoLocalizacao.sub}</Text>}
           </View>
-          <Text style={styles.locationStatus}>Ativa</Text>
-        </View>
+          {estadoLocalizacao && (
+            <Text style={[styles.locationStatus, { color: estadoLocalizacao.cor }]}>
+              {estadoLocalizacao.status}
+            </Text>
+          )}
+        </Pressable>
       </View>
     </View>
   );

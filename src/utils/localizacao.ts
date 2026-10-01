@@ -57,11 +57,14 @@ export type LocalDaDenuncia = { posicao: Posicao; endereco: string };
 // Erro com mensagem pronta para a tela da nova denúncia
 export class ErroLocalizacao extends Error {}
 
-// "Rua Dr. Cândido Rodrigues, 120 - Centro"; sem nada útil, as coordenadas
-function formatarEndereco(item: Location.LocationGeocodedAddress | undefined, p: Posicao) {
-  const rua = [item?.street, item?.streetNumber].filter(Boolean).join(', ');
-  const texto = [rua || item?.name, item?.district].filter(Boolean).join(' - ');
-  return (texto || `${p.latitude.toFixed(5)}, ${p.longitude.toFixed(5)}`).slice(0, 300);
+// "Rua Dr. Cândido Rodrigues - Centro": só rua e bairro, sem o número. O endereço aparece
+// para todo o município no feed, e o número pode ser a casa de quem denunciou.
+// (O Android às vezes devolve o número em `name`: só usa `name` se tiver letras.)
+function formatarEndereco(item: Location.LocationGeocodedAddress | undefined) {
+  const nomeDoLugar = item?.name && /[a-zà-ÿ]/i.test(item.name) ? item.name : null;
+  const rua = item?.street ?? nomeDoLugar;
+  const texto = [rua, item?.district].filter(Boolean).join(' - ');
+  return (texto || item?.city || item?.subregion || 'Endereço não identificado').slice(0, 300);
 }
 
 // Onde está o problema: precisa ser a posição de agora (é ela que vai para a prefeitura),
@@ -85,13 +88,13 @@ export async function obterLocalDaDenuncia(): Promise<LocalDaDenuncia> {
   }
   ultima = { posicao, em: Date.now() };
 
-  // Endereço por extenso a partir das coordenadas; se falhar, segue com as coordenadas
+  // Endereço por extenso a partir das coordenadas; se falhar, segue com bairro/cidade ou um aviso
   let endereco: string;
   try {
     const [item] = await Location.reverseGeocodeAsync(posicao);
-    endereco = formatarEndereco(item, posicao);
+    endereco = formatarEndereco(item);
   } catch {
-    endereco = formatarEndereco(undefined, posicao);
+    endereco = formatarEndereco(undefined);
   }
   return { posicao, endereco };
 }
