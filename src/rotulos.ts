@@ -23,3 +23,17 @@ export const STATUS_LABEL: Record<StatusDenuncia, string> = {
   em_analise: 'Em análise',
   resolvida: 'Resolvida',
 };
+
+// Única sequência que a API aceita: recebida → em_analise → resolvida
+export const PROXIMO_STATUS: Record<StatusDenuncia, StatusDenuncia | null> = {
+  recebida: 'em_analise',
+  em_analise: 'resolvida',
+  resolvida: null,
+};
+
+// Texto do botão do gestor para levar ao próximo status
+export const ACAO_STATUS: Record<StatusDenuncia, string> = {
+  recebida: 'Mover para Em análise',
+  em_analise: 'Marcar como resolvida',
+  resolvida: '',
+};
