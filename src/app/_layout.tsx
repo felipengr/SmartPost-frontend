@@ -22,6 +22,7 @@ function RootStack() {
         <Stack.Screen name="minhas-denuncias" />
         <Stack.Screen name="alterar-senha" />
         <Stack.Screen name="cadastrar-morador" />
+        <Stack.Screen name="moradores" />
       </Stack.Protected>
 
       <Stack.Protected guard={!usuario}>
