@@ -34,6 +34,7 @@ export default function Perfil() {
   // Só para gestores (a API também recusa quem não é): ações da prefeitura do município dele
   const menuGestor = [
     { label: 'Cadastrar morador', onPress: () => router.push('/cadastrar-morador') },
+    { label: 'Moradores e senhas', onPress: () => router.push('/moradores') },
   ];
 
   const menu = [

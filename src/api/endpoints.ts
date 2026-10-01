@@ -94,3 +94,23 @@ export type NovoUsuario = {
 export function cadastrarUsuario(novo: NovoUsuario) {
   return api<Usuario>('/usuarios', { method: 'POST', corpo: novo });
 }
+
+// Como o gestor vê cada usuário da cidade (CPF só mascarado, a API nunca manda o completo)
+export type UsuarioDaCidade = {
+  id: string;
+  nome: string;
+  papel: Papel;
+  cpfMascarado: string;
+  criadoEm: string;
+};
+
+// Só gestor: usuários do município dele, por nome (até 50; `busca` por nome ou parte do CPF)
+export function listarUsuarios(busca: string) {
+  const query = busca.trim() ? `?${new URLSearchParams({ busca: busca.trim() })}` : '';
+  return api<{ itens: UsuarioDaCidade[]; total: number }>(`/usuarios${query}`);
+}
+
+// Só gestor: senha nova para quem esqueceu (a pessoa sai de todos os aparelhos)
+export function redefinirSenha(id: string, novaSenha: string) {
+  return api<void>(`/usuarios/${id}/senha`, { method: 'PATCH', corpo: { novaSenha } });
+}

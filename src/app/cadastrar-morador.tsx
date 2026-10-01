@@ -6,7 +6,6 @@ import {
   Platform,
   Pressable,
   ScrollView,
-  Share,
   StyleSheet,
   Text,
   TextInput,
@@ -17,6 +16,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ErroApi } from '@/api/cliente';
 import { cadastrarUsuario } from '@/api/endpoints';
 import { Button } from '@/components/Button';
+import { CartaoAcesso } from '@/components/CartaoAcesso';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { useApp } from '@/context/AppContext';
 import { colors, radius, spacing } from '@/theme';
@@ -97,41 +97,27 @@ export default function CadastrarMorador() {
     setCadastrado(null);
   };
 
-  const compartilhar = (c: Cadastrado) =>
-    Share.share({
-      message:
-        `Olá, ${c.nome}! Seu acesso ao Smart Poste:\n\n` +
-        `Município: ${municipio?.nome ?? ''}\nCPF: ${c.cpf}\nSenha: ${c.senha}\n\n` +
-        'No primeiro acesso, troque a senha em Perfil → Alterar senha.',
-    });
-
   if (cadastrado) {
     return (
       <View style={styles.screen}>
         <ScreenHeader title="Cadastrar morador" />
         <ScrollView
           contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + spacing.lg }]}>
-          <View style={styles.sucesso}>
-            <Ionicons name="checkmark-circle" size={40} color={colors.primary} />
-            <Text style={styles.titulo}>{cadastrado.nome} foi cadastrado!</Text>
-            <Text style={styles.dica}>
-              {cadastrado.papel === 'gestor' ? 'Gestor' : 'Morador'} em {municipio?.nome}
-            </Text>
-          </View>
-
-          <View style={styles.cartao}>
-            <Linha rotulo="CPF" valor={cadastrado.cpf} />
-            <Linha rotulo="Senha inicial" valor={cadastrado.senha} destaque />
-          </View>
-
-          <Text style={styles.dica}>
-            Envie o acesso só para essa pessoa, por mensagem privada. Ela deve trocar a senha no
-            primeiro acesso.
-          </Text>
-
-          <Button title="Compartilhar acesso" onPress={() => compartilhar(cadastrado)} />
-          <Button title="Cadastrar outro morador" variant="link" onPress={recomecar} />
-          <Button title="Voltar ao perfil" variant="link" onPress={() => router.back()} />
+          <CartaoAcesso
+            titulo={`${cadastrado.nome} foi cadastrado!`}
+            subtitulo={`${cadastrado.papel === 'gestor' ? 'Gestor' : 'Morador'} em ${municipio?.nome ?? ''}`}
+            linhas={[
+              { rotulo: 'CPF', valor: cadastrado.cpf },
+              { rotulo: 'Senha inicial', valor: cadastrado.senha, destaque: true },
+            ]}
+            mensagem={
+              `Olá, ${cadastrado.nome}! Seu acesso ao Smart Poste:\n\n` +
+              `Município: ${municipio?.nome ?? ''}\nCPF: ${cadastrado.cpf}\nSenha: ${cadastrado.senha}\n\n` +
+              'No primeiro acesso, troque a senha em Perfil → Alterar senha.'
+            }>
+            <Button title="Cadastrar outro morador" variant="link" onPress={recomecar} />
+            <Button title="Voltar ao perfil" variant="link" onPress={() => router.back()} />
+          </CartaoAcesso>
         </ScrollView>
       </View>
     );
@@ -221,17 +207,6 @@ export default function CadastrarMorador() {
   );
 }
 
-function Linha({ rotulo, valor, destaque }: { rotulo: string; valor: string; destaque?: boolean }) {
-  return (
-    <View style={styles.linha}>
-      <Text style={styles.linhaRotulo}>{rotulo}</Text>
-      <Text selectable style={[styles.linhaValor, destaque && styles.linhaDestaque]}>
-        {valor}
-      </Text>
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
@@ -311,43 +286,6 @@ const styles = StyleSheet.create({
   gerarTexto: {
     fontSize: 13,
     fontWeight: '600',
-    color: colors.primary,
-  },
-  sucesso: {
-    alignItems: 'center',
-    marginVertical: spacing.md,
-  },
-  titulo: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: colors.text,
-    textAlign: 'center',
-    marginTop: spacing.sm,
-    marginBottom: spacing.xs,
-  },
-  cartao: {
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radius.md,
-    padding: spacing.md,
-    marginBottom: spacing.md,
-    gap: spacing.sm,
-  },
-  linha: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  linhaRotulo: {
-    fontSize: 13,
-    color: colors.textMuted,
-  },
-  linhaValor: {
-    fontSize: 15,
-    color: colors.text,
-  },
-  linhaDestaque: {
-    fontWeight: '700',
     color: colors.primary,
   },
 });
