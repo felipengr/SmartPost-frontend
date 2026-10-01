@@ -1,7 +1,7 @@
 // Chamadas da API, uma por rota do contrato (docs/API.md)
 import { File } from 'expo-file-system';
 
-import type { Denuncia, Municipio, PaginaDenuncias, TipoProblema, Usuario } from '@/types';
+import type { Denuncia, Municipio, PaginaDenuncias, Papel, TipoProblema, Usuario } from '@/types';
 
 import { api } from './cliente';
 
@@ -81,4 +81,16 @@ export async function publicarDenuncia(nova: NovaDenuncia) {
 // Troca a senha. A API derruba todas as sessões (inclusive esta) e devolve um token novo
 export function trocarSenha(senhaAtual: string, novaSenha: string) {
   return api<{ token: string }>('/me/senha', { method: 'PATCH', corpo: { senhaAtual, novaSenha } });
+}
+
+export type NovoUsuario = {
+  nome: string;
+  cpf: string;
+  senhaInicial: string;
+  papel: Papel;
+};
+
+// Só gestor. O usuário nasce no município do gestor logado (a API decide, não o app)
+export function cadastrarUsuario(novo: NovoUsuario) {
+  return api<Usuario>('/usuarios', { method: 'POST', corpo: novo });
 }

@@ -29,6 +29,12 @@ export default function Perfil() {
   if (!usuario) return null;
 
   const stats = [{ valor: totalDenuncias ?? '–', label: 'denúncias', cor: colors.primary }];
+  const ehGestor = usuario.papel === 'gestor';
+
+  // Só para gestores (a API também recusa quem não é): ações da prefeitura do município dele
+  const menuGestor = [
+    { label: 'Cadastrar morador', onPress: () => router.push('/cadastrar-morador') },
+  ];
 
   const menu = [
     { label: 'Editar perfil', onPress: emBreve('Editar perfil') },
@@ -69,6 +75,12 @@ export default function Perfil() {
             {municipio.nome} • {municipio.uf}
           </Text>
         )}
+        {ehGestor && (
+          <View style={styles.selo}>
+            <Ionicons name="shield-checkmark-outline" size={12} color={colors.primary} />
+            <Text style={styles.seloTexto}>Gestor</Text>
+          </View>
+        )}
 
         <View style={styles.stats}>
           {stats.map((s) => (
@@ -78,6 +90,21 @@ export default function Perfil() {
             </View>
           ))}
         </View>
+
+        {ehGestor && (
+          <View style={styles.menu}>
+            <Text style={styles.secao}>Painel da prefeitura</Text>
+            {menuGestor.map((item) => (
+              <Pressable
+                key={item.label}
+                onPress={item.onPress}
+                style={({ pressed }) => [styles.menuItem, pressed && { opacity: 0.6 }]}>
+                <Text style={styles.menuText}>{item.label}</Text>
+                <Ionicons name="chevron-forward" size={14} color={colors.textMuted} />
+              </Pressable>
+            ))}
+          </View>
+        )}
 
         <View style={styles.menu}>
           {menu.map((item) => (
@@ -155,9 +182,32 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
     marginTop: 2,
   },
+  selo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: colors.primaryLight,
+    borderRadius: radius.md,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 2,
+    marginTop: spacing.sm,
+  },
+  seloTexto: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: colors.primary,
+  },
   menu: {
     alignSelf: 'stretch',
     marginTop: spacing.lg,
+  },
+  secao: {
+    fontSize: 11,
+    fontWeight: '600',
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
+    color: colors.textMuted,
+    marginBottom: spacing.xs,
   },
   menuItem: {
     flexDirection: 'row',
