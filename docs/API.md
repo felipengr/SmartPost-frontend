@@ -45,6 +45,8 @@ Resumo — detalhes de cada um logo abaixo.
 | `POST` | `/denuncias` | cidadão | Telas 05 → 06 → 08 (nova denúncia) |
 | `PATCH` | `/denuncias/:id/status` | gestor | Painel da prefeitura |
 | `POST` | `/usuarios` | gestor | Painel da prefeitura |
+| `GET` | `/usuarios` | gestor | Painel → Moradores |
+| `PATCH` | `/usuarios/:id/senha` | gestor | Painel → Moradores → Redefinir senha |
 
 ### `GET /municipios`
 
@@ -221,6 +223,41 @@ O servidor registra cada mudança (de, para, quem e quando) em um histórico. Se
 ```
 
 **403** `SEM_PERMISSAO` se quem chama não for `gestor` · **409** `CPF_JA_CADASTRADO` se o CPF já existir no município · **422** `DADOS_INVALIDOS`.
+
+### `GET /usuarios` — gestor
+
+Usuários do município do gestor, em ordem de nome (até 50 por vez).
+
+| Query | Obrigatório | Descrição |
+|---|---|---|
+| `busca` | não | Até 60 caracteres. Texto busca no nome (sem diferenciar maiúsculas); só números/pontos/traço (3+ dígitos) busca no CPF |
+
+**200**
+```json
+{
+  "itens": [
+    { "id": "u_01J...", "nome": "Maria Souza", "papel": "cidadao", "cpfMascarado": "***.654.321-**", "criadoEm": "2026-10-01T19:03:00.000Z" }
+  ],
+  "total": 132
+}
+```
+
+- `total` é quantos usuários atendem à busca (pode passar de 50: refine a busca).
+- O CPF vem **mascarado** (padrão LGPD): suficiente para diferenciar homônimos, sem expor o número inteiro.
+
+**400** `REQUISICAO_INVALIDA` se a busca for longa demais · **403** `SEM_PERMISSAO` se quem chama não for `gestor`.
+
+### `PATCH /usuarios/:id/senha` — gestor
+
+Para quem esqueceu a senha: o gestor define uma senha nova para alguém do município dele.
+
+```json
+{ "novaSenha": "••••••••" }
+```
+
+**204** sem corpo. A pessoa é **desconectada de todos os aparelhos** e entra com a senha nova.
+
+**403** `SEM_PERMISSAO` se quem chama não for `gestor`, ou se for a própria conta (para isso existe `PATCH /me/senha`) · **404** `NAO_ENCONTRADA` se o usuário não existir ou for de outro município · **422** se `novaSenha` tiver menos de 8 caracteres.
 
 ## Enums
 
