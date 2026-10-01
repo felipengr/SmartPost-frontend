@@ -33,7 +33,7 @@ export default function Perfil() {
   const menu = [
     { label: 'Editar perfil', onPress: emBreve('Editar perfil') },
     { label: 'Minhas denúncias', onPress: () => router.push('/minhas-denuncias') },
-    { label: 'Alterar senha', onPress: emBreve('Alterar senha') },
+    { label: 'Alterar senha', onPress: () => router.push('/alterar-senha') },
     {
       label: 'Sobre o Smart Poste',
       onPress: () =>

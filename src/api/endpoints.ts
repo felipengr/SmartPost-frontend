@@ -77,3 +77,8 @@ export async function publicarDenuncia(nova: NovaDenuncia) {
     await api<DenunciaDaApi>('/denuncias', { method: 'POST', corpo: form, tempoLimiteMs: 60_000 }),
   );
 }
+
+// Troca a senha. A API derruba todas as sessões (inclusive esta) e devolve um token novo
+export function trocarSenha(senhaAtual: string, novaSenha: string) {
+  return api<{ token: string }>('/me/senha', { method: 'PATCH', corpo: { senhaAtual, novaSenha } });
+}
