@@ -10,6 +10,7 @@
       "supportsTablet": false
     },
     "android": {
+      "package": "com.felipengr.smartposte",
       "adaptiveIcon": {
         "backgroundColor": "#FFFFFF",
         "foregroundImage": "./assets/icon-smartposte.png"

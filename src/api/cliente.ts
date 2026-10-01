@@ -1,6 +1,14 @@
 // Única porta de saída do app para a API (contrato em docs/API.md).
-// Endereço em EXPO_PUBLIC_API_URL (.env.local). No emulador Android, o computador é 10.0.2.2.
-const API_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://10.0.2.2:3333/v1';
+// Endereço em EXPO_PUBLIC_API_URL: .env.local no desenvolvimento, eas.json nos builds.
+// Sem ele, só em desenvolvimento cai no emulador (10.0.2.2 = o computador); num build,
+// falha na hora em vez de parecer "sem internet" para sempre.
+const API_URL =
+  process.env.EXPO_PUBLIC_API_URL ??
+  (__DEV__
+    ? 'http://10.0.2.2:3333/v1'
+    : (() => {
+        throw new Error('EXPO_PUBLIC_API_URL não configurada neste build (veja eas.json)');
+      })());
 
 const TEMPO_LIMITE_MS = 15_000;
 
