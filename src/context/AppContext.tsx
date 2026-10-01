@@ -11,8 +11,7 @@ import {
 import { definirToken, ErroApi, quandoSessaoExpirar } from '@/api/cliente';
 import { buscarPerfil, entrar } from '@/api/endpoints';
 import { apagarSessao, lerSessao, salvarSessao } from '@/api/sessao';
-import { DENUNCIAS_MOCK } from '@/mocks/data';
-import type { Denuncia, Municipio, TipoProblema, Usuario } from '@/types';
+import type { Municipio, TipoProblema, Usuario } from '@/types';
 
 type NovaDenuncia = {
   fotoUri?: string;
@@ -23,7 +22,6 @@ type NovaDenuncia = {
 type AppContextValue = {
   municipio: Municipio | null;
   usuario: Usuario | null;
-  denuncias: Denuncia[];
   // Foto da denúncia em andamento. Fica no estado (e não em params da rota) porque o
   // caminho do arquivo tem caracteres codificados (%40, %2F) que o router decodificaria.
   fotoRascunho: string | undefined;
@@ -32,16 +30,16 @@ type AppContextValue = {
   // Lança ErroApi com a mensagem pronta para a tela se o login falhar
   login: (cpf: string, senha: string) => Promise<void>;
   logout: () => void;
-  criarDenuncia: (dados: NovaDenuncia) => Denuncia;
+  criarDenuncia: (dados: NovaDenuncia) => { protocolo: string };
 };
 
 const AppContext = createContext<AppContextValue | null>(null);
 
-// Estado global. Login e sessão já usam a API; as denúncias ainda são mock.
+// Estado global: sessão e rascunho da nova denúncia. As listas de denúncias
+// vêm da API em cada tela (hook useDenuncias).
 export function AppProvider({ children }: { children: ReactNode }) {
   const [municipio, setMunicipio] = useState<Municipio | null>(null);
   const [usuario, setUsuario] = useState<Usuario | null>(null);
-  const [denuncias, setDenuncias] = useState<Denuncia[]>(DENUNCIAS_MOCK);
   const [fotoRascunho, setFotoRascunho] = useState<string | undefined>();
 
   // Sai da conta: esquece o token e apaga a sessão salva no aparelho.
@@ -89,33 +87,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
     [municipio],
   );
 
-  const criarDenuncia = useCallback(
-    ({ fotoUri, tipos, observacao }: NovaDenuncia) => {
-      const ultimo = Math.max(...denuncias.map((d) => Number(d.id)), 0);
-      const id = String(ultimo + 1);
-      const nova: Denuncia = {
-        id,
-        protocolo: `SP-${id.padStart(4, '0')}`,
-        endereco: 'Rua Dr. Cândido Rodrigues',
-        criadaEm: new Date(),
-        tipos,
-        status: 'recebida',
-        descricao: observacao,
-        distanciaKm: 0,
-        fotoUri,
-        doUsuario: true,
-      };
-      setDenuncias((prev) => [nova, ...prev]);
-      return nova;
-    },
-    [denuncias],
-  );
+  // TEMPORÁRIO até a parte 8c (POST /denuncias): não envia nada e não aparece no feed,
+  // só devolve um protocolo de exemplo para a tela de sucesso
+  const criarDenuncia = useCallback((_dados: NovaDenuncia) => ({ protocolo: 'SP-TESTE' }), []);
 
   const value = useMemo(
     () => ({
       municipio,
       usuario,
-      denuncias,
       fotoRascunho,
       setFotoRascunho,
       selecionarMunicipio: setMunicipio,
@@ -123,7 +102,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       logout,
       criarDenuncia,
     }),
-    [municipio, usuario, denuncias, fotoRascunho, login, logout, criarDenuncia],
+    [municipio, usuario, fotoRascunho, login, logout, criarDenuncia],
   );
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

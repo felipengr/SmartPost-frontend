@@ -18,7 +18,7 @@ import { Button } from '@/components/Button';
 import { PoleIllustration } from '@/components/PoleIllustration';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { useApp } from '@/context/AppContext';
-import { TIPO_LABEL } from '@/mocks/data';
+import { TIPO_LABEL } from '@/rotulos';
 import { colors, radius, spacing } from '@/theme';
 import type { TipoProblema } from '@/types';
 import { dataHora } from '@/utils/format';

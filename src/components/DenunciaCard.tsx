@@ -4,7 +4,7 @@ import { Image, StyleSheet, Text, View } from 'react-native';
 import { Chip } from '@/components/Chip';
 import { LogoIcon } from '@/components/Logo';
 import { PoleIllustration } from '@/components/PoleIllustration';
-import { STATUS_LABEL, TIPO_CHIP } from '@/mocks/data';
+import { STATUS_LABEL, TIPO_CHIP } from '@/rotulos';
 import { colors, radius, spacing } from '@/theme';
 import type { Denuncia, Municipio, StatusDenuncia, TipoProblema } from '@/types';
 import { distancia, tempoRelativo } from '@/utils/format';
@@ -44,8 +44,8 @@ export function DenunciaCard({ denuncia, municipio }: Props) {
         <Text style={styles.time}>{tempoRelativo(denuncia.criadaEm)}</Text>
       </View>
 
-      {denuncia.fotoUri ? (
-        <Image source={{ uri: denuncia.fotoUri }} style={styles.photo} />
+      {denuncia.fotoUrl ? (
+        <Image source={{ uri: denuncia.fotoUrl }} style={styles.photo} />
       ) : (
         <PoleIllustration height={220} />
       )}
@@ -61,10 +61,15 @@ export function DenunciaCard({ denuncia, municipio }: Props) {
         {!!denuncia.descricao && <Text style={styles.description}>{denuncia.descricao}</Text>}
 
         <View style={styles.footer}>
-          <View style={styles.row}>
-            <Ionicons name="location-outline" size={12} color={colors.textSubtle} />
-            <Text style={styles.meta}>{distancia(denuncia.distanciaKm)}</Text>
-          </View>
+          {/* Sem a localização do usuário (permissão negada), a API não manda a distância */}
+          {denuncia.distanciaKm !== null ? (
+            <View style={styles.row}>
+              <Ionicons name="location-outline" size={12} color={colors.textSubtle} />
+              <Text style={styles.meta}>{distancia(denuncia.distanciaKm)}</Text>
+            </View>
+          ) : (
+            <View />
+          )}
           <Text style={styles.meta}>Protocolo #{denuncia.protocolo}</Text>
         </View>
       </View>
