@@ -31,7 +31,15 @@
         }
       ],
       "expo-font",
-      "expo-secure-store"
+      "expo-secure-store",
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Permita que o $(PRODUCT_NAME) use sua localização para mostrar a distância das ocorrências e registrar onde está o problema.",
+          "isAndroidBackgroundLocationEnabled": false,
+          "isIosBackgroundLocationEnabled": false
+        }
+      ]
     ],
     "scheme": "smartposte",
     "experiments": {

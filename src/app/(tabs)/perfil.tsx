@@ -1,10 +1,11 @@
 import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
+import { useCallback, useState } from 'react';
 import { Alert, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
+import { buscarPerfil } from '@/api/endpoints';
 import { AppHeader } from '@/components/AppHeader';
 import { useApp } from '@/context/AppContext';
-import { DENUNCIAS_MOCK, ESTATISTICAS_MOCK } from '@/mocks/data';
 import { colors, radius, spacing } from '@/theme';
 import { iniciais } from '@/utils/format';
 
@@ -12,16 +13,22 @@ const emBreve = (titulo: string) => () => Alert.alert(titulo, 'Disponível em br
 
 // 07 — Perfil
 export default function Perfil() {
-  const { usuario, municipio, denuncias, logout } = useApp();
+  const { usuario, municipio, logout } = useApp();
+  // Total de denúncias do usuário (GET /me); recarrega ao abrir a aba
+  const [totalDenuncias, setTotalDenuncias] = useState<number | null>(null);
+
+  useFocusEffect(
+    useCallback(() => {
+      buscarPerfil()
+        .then((perfil) => setTotalDenuncias(perfil.estatisticas.denuncias))
+        // Sem internet, mantém o último número; 401 já leva de volta ao login
+        .catch(() => {});
+    }, []),
+  );
+
   if (!usuario) return null;
 
-  // Soma as denúncias criadas nesta sessão às estatísticas mockadas
-  const novas = denuncias.length - DENUNCIAS_MOCK.length;
-  const stats = [
-    { valor: ESTATISTICAS_MOCK.denuncias + novas, label: 'denúncias', cor: colors.primary },
-    { valor: ESTATISTICAS_MOCK.resolvidas, label: 'resolvidas', cor: colors.primary },
-    { valor: ESTATISTICAS_MOCK.emAnalise, label: 'em análise', cor: colors.accent },
-  ];
+  const stats = [{ valor: totalDenuncias ?? '–', label: 'denúncias', cor: colors.primary }];
 
   const menu = [
     { label: 'Editar perfil', onPress: emBreve('Editar perfil') },

@@ -24,16 +24,22 @@ export type TipoProblema =
 
 export type StatusDenuncia = 'recebida' | 'em_analise' | 'resolvida';
 
+// Item do feed como a API devolve (criadaEm já convertida de texto ISO para Date)
 export type Denuncia = {
   id: string;
   protocolo: string;
   endereco: string;
+  latitude: number;
+  longitude: number;
   criadaEm: Date;
   tipos: TipoProblema[];
   status: StatusDenuncia;
   descricao: string;
-  distanciaKm: number;
-  fotoUri?: string;
-  // Mock: marca denúncias feitas pelo usuário logado
-  doUsuario?: boolean;
+  fotoUrl: string;
+  // null quando o app não mandou a localização do usuário
+  distanciaKm: number | null;
+  // Feita pelo usuário logado (a API nunca diz quem denunciou)
+  minha: boolean;
 };
+
+export type PaginaDenuncias = { itens: Denuncia[]; proximoCursor: string | null };
