@@ -20,6 +20,7 @@ function RootStack() {
         <Stack.Screen name="denuncia/detalhes" />
         <Stack.Screen name="denuncia/sucesso" options={{ gestureEnabled: false }} />
         <Stack.Screen name="minhas-denuncias" />
+        <Stack.Screen name="alterar-senha" />
       </Stack.Protected>
 
       <Stack.Protected guard={!usuario}>

@@ -13,6 +13,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ErroApi } from '@/api/cliente';
 import { Button } from '@/components/Button';
+import { CampoSenha } from '@/components/CampoSenha';
 import { LogoIcon } from '@/components/Logo';
 import { useApp } from '@/context/AppContext';
 import { colors, radius, spacing } from '@/theme';
@@ -83,13 +84,11 @@ export default function Login() {
         />
 
         <Text style={styles.label}>Senha</Text>
-        <TextInput
-          style={styles.input}
+        <CampoSenha
           value={senha}
           onChangeText={setSenha}
           placeholder="••••••••"
-          placeholderTextColor={colors.textSubtle}
-          secureTextEntry
+          returnKeyType="go"
           onSubmitEditing={entrar}
         />
 
