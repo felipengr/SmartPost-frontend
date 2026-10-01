@@ -11,13 +11,7 @@ import {
 import { definirToken, ErroApi, quandoSessaoExpirar } from '@/api/cliente';
 import { buscarPerfil, entrar } from '@/api/endpoints';
 import { apagarSessao, lerSessao, salvarSessao } from '@/api/sessao';
-import type { Municipio, TipoProblema, Usuario } from '@/types';
-
-type NovaDenuncia = {
-  fotoUri?: string;
-  tipos: TipoProblema[];
-  observacao: string;
-};
+import type { Municipio, Usuario } from '@/types';
 
 type AppContextValue = {
   municipio: Municipio | null;
@@ -30,7 +24,6 @@ type AppContextValue = {
   // Lança ErroApi com a mensagem pronta para a tela se o login falhar
   login: (cpf: string, senha: string) => Promise<void>;
   logout: () => void;
-  criarDenuncia: (dados: NovaDenuncia) => { protocolo: string };
 };
 
 const AppContext = createContext<AppContextValue | null>(null);
@@ -87,10 +80,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
     [municipio],
   );
 
-  // TEMPORÁRIO até a parte 8c (POST /denuncias): não envia nada e não aparece no feed,
-  // só devolve um protocolo de exemplo para a tela de sucesso
-  const criarDenuncia = useCallback((_dados: NovaDenuncia) => ({ protocolo: 'SP-TESTE' }), []);
-
   const value = useMemo(
     () => ({
       municipio,
@@ -100,9 +89,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       selecionarMunicipio: setMunicipio,
       login,
       logout,
-      criarDenuncia,
     }),
-    [municipio, usuario, fotoRascunho, login, logout, criarDenuncia],
+    [municipio, usuario, fotoRascunho, login, logout],
   );
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

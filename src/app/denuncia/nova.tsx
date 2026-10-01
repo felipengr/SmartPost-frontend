@@ -31,12 +31,13 @@ export default function NovaDenuncia() {
   }, [permission, requestPermission]);
 
   const capturar = async () => {
-    // Sem câmera (simulador/permissão negada): segue sem foto, usando a ilustração mock
-    if (!temPermissao || !pronta || !cameraRef.current) {
-      setFotoRascunho(undefined);
-      router.push('/denuncia/detalhes');
+    // A API exige a foto: sem permissão, pede de novo em vez de seguir sem ela
+    if (!temPermissao) {
+      if (permission?.canAskAgain) requestPermission();
       return;
     }
+    // Câmera ainda abrindo: ignora o toque
+    if (!pronta || !cameraRef.current) return;
     try {
       setCapturando(true);
       const foto = await cameraRef.current.takePictureAsync({

@@ -1,5 +1,7 @@
 // Chamadas da API, uma por rota do contrato (docs/API.md)
-import type { Denuncia, Municipio, PaginaDenuncias, Usuario } from '@/types';
+import { File } from 'expo-file-system';
+
+import type { Denuncia, Municipio, PaginaDenuncias, TipoProblema, Usuario } from '@/types';
 
 import { api } from './cliente';
 
@@ -49,4 +51,29 @@ export async function listarDenuncias({ lista, cursor, posicao }: FiltroFeed) {
     `${caminho}?${query}`,
   );
   return { ...pagina, itens: pagina.itens.map(converter) } satisfies PaginaDenuncias;
+}
+
+export type NovaDenuncia = {
+  fotoUri: string;
+  tipos: TipoProblema[];
+  descricao: string;
+  posicao: Posicao;
+  endereco: string;
+};
+
+// multipart/form-data, como no contrato. No SDK 57 o fetch global é o expo/fetch (padrão
+// web), que só aceita Blob no FormData: o File do expo-file-system é um Blob que lê o
+// arquivo do disco na hora de enviar. O antigo { uri, name, type } não funciona mais.
+export async function publicarDenuncia(nova: NovaDenuncia) {
+  const form = new FormData();
+  form.append('foto', new File(nova.fotoUri), 'foto.jpg');
+  for (const tipo of nova.tipos) form.append('tipos', tipo);
+  if (nova.descricao) form.append('descricao', nova.descricao);
+  form.append('latitude', String(nova.posicao.latitude));
+  form.append('longitude', String(nova.posicao.longitude));
+  form.append('endereco', nova.endereco);
+
+  return converter(
+    await api<DenunciaDaApi>('/denuncias', { method: 'POST', corpo: form, tempoLimiteMs: 60_000 }),
+  );
 }
