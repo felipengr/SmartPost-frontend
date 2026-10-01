@@ -1,13 +1,4 @@
-import type { Denuncia, Municipio, StatusDenuncia, TipoProblema, Usuario } from '@/types';
-
-export const MUNICIPIOS: Municipio[] = [
-  { id: 'piracaia', nome: 'Piracaia', uf: 'SP', estado: 'São Paulo' },
-];
-
-export const USUARIO_MOCK: Usuario = {
-  nome: 'Felipe Nogueira',
-  cpf: '000.000.000-00',
-};
+import type { Denuncia, StatusDenuncia, TipoProblema } from '@/types';
 
 export const TIPO_LABEL: Record<TipoProblema, string> = {
   fio_exposto: 'Fio rompido / exposto',

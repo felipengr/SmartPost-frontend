@@ -1,26 +1,16 @@
-import { Ionicons } from '@expo/vector-icons';
-import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { LogoIcon } from '@/components/Logo';
 import { useApp } from '@/context/AppContext';
-import { MUNICIPIOS } from '@/mocks/data';
 import { colors, spacing } from '@/theme';
 
-// Cabeçalho com a marca, usado nas telas principais (Feed, Perfil, Sucesso)
+// Cabeçalho com a marca, usado nas telas principais (Feed, Perfil, Sucesso).
+// O município é o da conta logada: para usar outro, é preciso sair e entrar com uma conta de lá.
 export function AppHeader({ subtitle }: { subtitle?: string }) {
   const insets = useSafeAreaInsets();
-  const { municipio, selecionarMunicipio } = useApp();
+  const { municipio } = useApp();
   const sub = subtitle ?? (municipio ? `${municipio.nome} • ${municipio.uf}` : '');
-
-  const trocarMunicipio = () =>
-    Alert.alert('Município', 'Selecione o município conveniado.', [
-      ...MUNICIPIOS.map((m) => ({
-        text: `${m.nome} • ${m.uf}`,
-        onPress: () => selecionarMunicipio(m),
-      })),
-      { text: 'Cancelar', style: 'cancel' as const },
-    ]);
 
   return (
     <View style={[styles.container, { paddingTop: insets.top + spacing.sm }]}>
@@ -29,9 +19,6 @@ export function AppHeader({ subtitle }: { subtitle?: string }) {
         <Text style={styles.title}>Smart Poste</Text>
         {!!sub && <Text style={styles.subtitle}>{sub}</Text>}
       </View>
-      <Pressable hitSlop={12} accessibilityLabel="Trocar município" onPress={trocarMunicipio}>
-        <Ionicons name="chevron-down" size={20} color={colors.primary} />
-      </Pressable>
     </View>
   );
 }
